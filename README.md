@@ -350,3 +350,99 @@ given().auth().oauth2(token)
 ```
 
 En Screenplay, la task de login guarda el token con `actor.remember("token", ...)` y las demás lo envían con `.with(req -> req.auth().oauth2(token))`.
+
+## Informe de la Evaluación Continua T1
+
+Estudiante: **Marilyn Ticona Salinas** — Código: **I202506711** — Dígito **D = 1** — Curso **PI5620**.
+
+El hook `Hooks.beforeScenario()` imprime antes de cada escenario el nombre, el código y la fecha/hora con `LocalDateTime.now()`. Esa impresión debe aparecer en la consola de cada captura.
+
+Antes de ejecutar: reiniciar la API (la BD se recrea en cada arranque), configurar `.env` y usar JDK 21.
+
+```powershell
+.\mvnw.cmd verify
+```
+
+El reporte de Serenity se genera en `target/site/serenity/index.html`. Cualquier valor que no aparezca en el PDF o en este proyecto debe dejarse como `[VERIFICAR EN EJECUCIÓN]` contra la API; no se inventaron códigos HTTP ni códigos de error.
+
+### Pregunta 1 — Matrícula (fila D=1)
+
+Datos tomados del feature (no quemados en Java): alumno `i202610001`, curso `PI5620`, método `TARJETA`; acción que debe fallar: cotizar `PS5511, QA5517, DM5512, TS5514, SA5516, BD5410`.
+
+| Concepto | Cálculo | Valor esperado |
+|---|---|---:|
+| Créditos de PI5620 | 6 | 6 |
+| Precio por crédito | regla del proyecto | S/ 120.00 |
+| Subtotal | 6 × 120 | S/ 720.00 |
+| Descuento | promedio 18 ≥ 17 → 20 % | 20 % (S/ 144.00) |
+| Total | 720 − 144 | **S/ 576.00** |
+
+| Escenario | Resultado verificado | Schema |
+|---|---|---|
+| Cotizar PI5620 | 200, 6 créditos, subtotal 720.0, descuento 20, total 576.0 | `cotizacion.json` |
+| Matricular | 201, `REGISTRADA`, monto 576.0, `id` tomado de la respuesta | `matricula.json` |
+| Pagar con TARJETA | 200, `PAGADA`, `fechaPago` con valor | `matricula.json` |
+| `GET /api/pagos?alumno=i202610001` | pago con el mismo `idMatricula`, método `TARJETA` y `numeroOperacion` con formato `OP-000000` | — |
+| Cotización que debe fallar | 422, `codigo = LIMITE_CREDITOS` | `error.json` |
+
+Explicación de la regla fallida: la cotización de los seis cursos suma 22 créditos. Después del Escenario 2 la alumna ya tiene 6 créditos vigentes en el periodo abierto, por lo que `6 + 22 = 28` supera el tope de 24. Ninguna otra validación lo detiene antes porque `cotizar` solo revisa acceso, existencia y límite de créditos; no valida carrera, deuda, prerrequisitos, vacantes ni cruce de horario (eso ocurre en `POST /api/matriculas`). El correlativo `numeroOperacion` se construye con `OP-%06d` sobre el id del pago, por lo que su valor exacto depende del orden de ejecución: verificarlo en la captura si se requiere el número completo.
+
+Para la fila D=1 no aplica “Sin cuerpo en la petición”. Si se ejecutara esa variante, `PagoRequest.metodoOEfectivo()` registra `EFECTIVO` cuando el body está ausente; el step ya contempla ese caso.
+
+### Pregunta 2 — Seguridad (Screenplay)
+
+Los tokens se guardan con `actor.remember(...)` y se leen con `actor.recall(...)`; no hay variables `static` para tokens. Cada actor tiene la habilidad `CallAnApi`.
+
+| Escenario | Paso clave | HTTP / `codigo` |
+|---|---|---|
+| Rotación del refresh token | primer `POST /api/auth/refresh` | 200, par nuevo de tokens |
+| Rotación del refresh token | reutilizar el refresh original | 401 / `REFRESH_REUTILIZADO` |
+| Rotación del refresh token | `GET /api/auth/perfil` con el accessToken nuevo | 401 / `TOKEN_INVALIDO` |
+| Cierre de sesión | `POST /api/auth/logout` | 204 |
+| Cierre de sesión | perfil con el mismo accessToken | 401 / `TOKEN_INVALIDO` |
+| Bloqueo de `i202610004` | intentos 1 a 4 con clave errada | 401 / `CREDENCIALES_INVALIDAS` |
+| Bloqueo de `i202610004` | quinto intento errado y luego clave correcta | 423 / `CUENTA_BLOQUEADA` |
+| Sin permiso de admin | `GET /api/alumnos` con token de `i202610001` | 403 / `ACCESO_DENEGADO` |
+
+Todas las respuestas de error validan `schemas/error.json`. El refresh token es de un solo uso: al reutilizarlo se revocan todas las sesiones del usuario, por eso el accessToken nuevo queda inválido de inmediato. El bloqueo dura 15 minutos y se reinicia al levantar la API; para repetir el escenario hay que reiniciarla o desbloquear con un ADMIN.
+
+### Pregunta 3 — Calificaciones e historial (Screenplay)
+
+Docente `D0001`, alumna Rosa Medina `i202610005`, curso `PI5620`. El `idMatricula` se obtiene filtrando `GET /api/matriculas` con el token de la alumna; no se escribe fijo.
+
+Historial base de Rosa en 2026-1: LP5401 (4 créditos, nota 15) y AS5402 (3 créditos, nota 16) → `(15×4 + 16×3) / 7 = 108/7 = 15.43`, con 7 créditos aprobados.
+
+| Nota en PI5620 | Cálculo del promedio | Condición | Créditos aprobados | Promedio |
+|---:|---|---|---:|---:|
+| `11` (= 10 + D) | `(108 + 11×6) / 13 = 174/13` | DESAPROBADO | 7 | **13.38** |
+| `12,5` | `(108 + 12.5×6) / 13 = 183/13` | DESAPROBADO | 7 | **14.08** |
+| `12.5` (con punto) | mismo cálculo anterior | DESAPROBADO | 7 | **14.08** |
+
+Una nota menor a 13 no aumenta los créditos aprobados, pero sí entra al denominador con los 6 créditos de PI5620 y reduce el promedio. En el body JSON la nota debe enviarse como número con punto (`{"nota":12.5}`); `12,5` solo se usa en el Gherkin en español y se normaliza en el step con `replace(',', '.')`. Al ejecutar una vez la fila escrita como `12.5` se captura que la petición es válida y devuelve 200. Si se usara `{double}` en la expresión del step con locale español, Cucumber no convertiría el punto; por eso el step usa `{string}` y normaliza. El mensaje exacto de ese intento con `{double}` queda como `[VERIFICAR EN EJECUCIÓN]` en la máquina donde se sustente.
+
+| Escenario | HTTP / `codigo` | Schema |
+|---|---|---|
+| D0001 califica PI5620 | 200, `condicion` según la tabla | — |
+| Historial de la alumna | 200, créditos y promedio de la tabla | `historial.json` |
+| D0002 (no dicta el curso) | 403 / `ACCESO_DENEGADO` | `error.json` |
+| PS5511 de la misma alumna, no pagada | 409 / `MATRICULA_NO_PAGADA` | `error.json` |
+
+### Capturas e informe
+
+Incluir en el PDF (o en este README) estas capturas, todas con la línea del hook visible en consola:
+
+1. Consola de los tres escenarios de `matricula.feature`, con la tabla de cálculo de la P1 y el error `LIMITE_CREDITOS`.
+2. Consola de los cuatro escenarios de `seguridad.feature`, especialmente el quinto intento con 423 y el rechazo del accessToken nuevo.
+3. Consola del `Esquema del escenario` de `calificaciones.feature`, del escenario con `12.5` y del reporte `target/site/serenity/index.html`.
+4. Si se usa PDF, pegar también el fragmento del `git log --oneline` donde se vean los commits `P1`, `P2` y `P3`.
+
+### Puntos para la sustentación
+
+- Diferenciar BDD (feature en español con `# language: es`) del código de automatización; los datos de la fila están en el feature.
+- Explicar por qué se reinicia la API antes de la suite: BD recreada, JWT invalidados y contador de bloqueo a cero.
+- Mostrar cómo se obtiene el `idMatricula` de la respuesta y cómo se reutiliza en pagar/calificar.
+- Justificar el uso de `matchesJsonSchemaInClasspath` y de `remember`/`recall` frente a variables `static`.
+- Recorrer el orden de validaciones: `cotizar` vs `registrar`, rotación de refresh con revocación de sesiones, y regla de nota >= 13.
+- Explicar el decimal `12,5` vs `12.5` y qué se capturó en la ejecución.
+
+El historial de commits debe tener al menos uno por pregunta (`P1`, `P2`, `P3`). El `remote origin` actual apunta al repositorio del curso; para la entrega hay que subir estos commits a tu propio repositorio público.
