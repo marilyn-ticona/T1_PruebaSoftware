@@ -1,28 +1,38 @@
-Feature: : Matricula de cursos
-  Como alumno de CIBERTEC
-  Quiero matricularme en mis cursos
-  Para llevarlos en el ciclo
+# language: es
+Característica: Matrícula del alumno con dígito D=1
+  Como estudiante de Pruebas de Software
+  Quiero automatizar el flujo con los datos de mi fila
+  Para verificar la matrícula, el pago y la regla que debe fallar
 
-  Scenario: Matricula valida con descuento por promedio y anulacion
-    Given  que Ana consulta la API de matricula
-    When se matricula con el codigo "i202610001" en el curso "PS3511"
-    Then el codigo de respuesta es 201
-    And el monto de la matricula es 288,0
-    And el estado de la matricula es "REGISTRADA"
-    When anula es matricula
-    Then el codigo de respuesta es 200
-    And el estado de la matricula es "ANULADA"
+  Antecedentes:
+    Dado que el alumno "i202610001" inicia sesión con la clave "Cibertec2026" y obtiene un token Bearer
 
-  Scenario Outline: Matricula rechazada por <motivo>
-    Given  que Ana consulta la API de matricula
-    When se matricula por codigo "<alumno>" en el curso "<curso>"
-    Then el codigo de respuesta es <status>
-    And el codigo de error es "<codigo>"
-    Examples:
-      | motivo             | alumno     | curso  | status | codigo               |
-      | deuda              | i202610004 | PS5511 | 422    | ALUMNO_CON_DEUDA     |
-      | duplicada          | i202610003 | IA5513 | 409    | MATRICULA_DUPLICADA  |
-      | falta de vacantes  | i202610001 | IA5513 | 409    | SIN_VACANTES         |
-      | cruce de horario   | i202610002 | QA5517 | 409    | CRUCE_HORARIO        |
-      | límite de créditos | i202610005 | TS5514 | 422    | LIMITE_CREDITOS      |
-      | alumno inexistente | i999999999 | PS5511 | 404    | ALUMNO_NO_ENCONTRADO |
+  Escenario: Cotizar el curso de mi fila
+    Cuando cotizo el curso "PI5620" para el alumno "i202610001"
+    Entonces la respuesta de cotización tiene el estado 200
+    Y la cotización tiene 6 créditos, subtotal "720.0", descuento 20 y total "576.0"
+    Y la respuesta JSON cumple el esquema "cotizacion.json"
+
+  Escenario: Matricularse y pagar el curso de mi fila
+    Cuando matrico al alumno "i202610001" en el curso "PI5620"
+    Entonces la respuesta de matrícula tiene el estado 201
+    Y la matrícula tiene estado "REGISTRADA" y monto "576.0"
+    Y la respuesta JSON cumple el esquema "matricula.json"
+    Cuando pago la matrícula creada con el método "TARJETA"
+    Entonces la respuesta de pago tiene el estado 200
+    Y la matrícula tiene estado "PAGADA" y fechaPago con valor
+    Y la respuesta JSON cumple el esquema "matricula.json"
+    Cuando consulto los pagos del alumno "i202610001"
+    Entonces existe un pago para la matrícula creada con método "TARJETA" y número de operación con formato "OP-000000"
+
+  Escenario: Regla de negocio que debe fallar
+    Cuando cotizo los cursos que deben fallar:
+      | PS5511 |
+      | QA5517 |
+      | DM5512 |
+      | TS5514 |
+      | SA5516 |
+      | BD5410 |
+    Entonces la respuesta de error tiene el estado 422
+    Y el error tiene el codigo "LIMITE_CREDITOS"
+    Y la respuesta JSON cumple el esquema "error.json"
