@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["codigo", "nombre", "ciclo", "creditos", "modalidad", "dia", "horaInicio", "horaFin", "vacantes", "disponibles"],
+  "properties": {
+    "codigo": { "type": "string", "pattern": "^[A-Z]{2}[0-9]{4}$" },
+    "nombre": { "type": "string" },
+    "ciclo": { "type": "integer", "minimum": 1, "maximum": 6 },
+    "creditos": { "type": "integer", "minimum": 1 },
+    "modalidad": { "enum": ["PRESENCIAL", "VIRTUAL", "HIBRIDO"] },
+    "dia": { "enum": ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"] },
+    "horaInicio": { "type": "string" },
+    "horaFin": { "type": "string" },
+    "vacantes": { "type": "integer" },
+    "disponibles": { "type": "integer" }
+  }
+}

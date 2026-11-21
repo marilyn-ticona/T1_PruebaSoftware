@@ -24,6 +24,6 @@ public class CerrarSesion implements Task {
     @Step("{0} cierra sesión con su accessToken")
     public <T extends Actor> void performAs(T actor) {
         actor.attemptsTo(Post.to("/api/auth/logout")
-                .with(peticion -> peticion.auth().oauth2(accessToken)));
+                .with(peticion -> peticion.header("Authorization", "Bearer " + accessToken)));
     }
 }

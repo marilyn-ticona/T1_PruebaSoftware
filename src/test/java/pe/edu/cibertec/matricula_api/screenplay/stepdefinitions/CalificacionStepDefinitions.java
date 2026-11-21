@@ -36,7 +36,7 @@ public class CalificacionStepDefinitions {
         String token = theActorInTheSpotlight().recall("tokenAlumna");
         theActorInTheSpotlight().attemptsTo(Get.resource("/api/matriculas")
                 .with(peticion -> peticion.queryParam("alumno", alumna)
-                        .auth().oauth2(token)));
+                        .header("Authorization", "Bearer " + token)));
 
         List<Map<String, Object>> matriculas = SerenityRest.lastResponse().jsonPath().getList("$");
         Map<String, Object> matricula = matriculas.stream()

@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "required": ["username", "rol", "nombre"],
+  "properties": {
+    "username": { "type": "string", "minLength": 1 },
+    "rol": { "enum": ["ADMIN", "DOCENTE", "ALUMNO"] },
+    "nombre": { "type": "string", "minLength": 1 }
+  }
+}

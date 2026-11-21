@@ -1,0 +1,5 @@
+# Created at 2026-11-21T09:17:30.773
+Boot Manifest-JAR contains absolute paths in classpath 'D:\SprintExamen\matricula-api\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+

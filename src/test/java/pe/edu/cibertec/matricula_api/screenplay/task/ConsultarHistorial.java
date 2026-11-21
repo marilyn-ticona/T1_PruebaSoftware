@@ -27,6 +27,6 @@ public class ConsultarHistorial implements Task {
     public <T extends Actor> void performAs(T actor) {
         actor.attemptsTo(Get.resource("/api/alumnos/{codigo}/historial")
                 .with(peticion -> peticion.pathParam("codigo", alumno)
-                        .auth().oauth2(token)));
+                        .header("Authorization", "Bearer " + token)));
     }
 }

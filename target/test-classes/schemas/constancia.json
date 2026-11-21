@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "required": ["codigoAlumno", "alumno", "periodo", "promedio", "descuento", "matriculas",
+    "creditos", "montoTotal", "montoPagado", "montoPendiente"],
+  "properties": {
+    "codigoAlumno": { "type": "string", "pattern": "^i[0-9]{9}$" },
+    "alumno": { "type": "string", "minLength": 1 },
+    "periodo": { "type": "string", "pattern": "^[0-9]{4}-[12]$" },
+    "promedio": { "type": "number", "minimum": 0, "maximum": 20 },
+    "descuento": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "matriculas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "codigoCurso", "creditos", "monto", "estado"],
+        "properties": {
+          "id": { "type": "integer" },
+          "codigoCurso": { "type": "string", "pattern": "^[A-Z]{2}[0-9]{4}$" },
+          "creditos": { "type": "integer" },
+          "monto": { "type": "number" },
+          "estado": { "enum": ["REGISTRADA", "PAGADA", "ANULADA"] }
+        }
+      }
+    },
+    "creditos": { "type": "integer", "minimum": 0 },
+    "montoTotal": { "type": "number", "minimum": 0 },
+    "montoPagado": { "type": "number", "minimum": 0 },
+    "montoPendiente": { "type": "number", "minimum": 0 }
+  }
+}

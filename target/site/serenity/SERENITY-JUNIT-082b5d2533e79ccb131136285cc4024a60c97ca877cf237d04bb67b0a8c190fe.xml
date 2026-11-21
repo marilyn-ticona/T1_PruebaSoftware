@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><testsuite errors="0" failures="0" name="Matrícula del alumno con dígito D=1" skipped="0" tests="3" time="0.6" timestamp="2026-11-21 09:19:03"><testcase name="Cotizar el curso de mi fila"/><testcase name="Matricularse y pagar el curso de mi fila"/><testcase name="Regla de negocio que debe fallar"/></testsuite>

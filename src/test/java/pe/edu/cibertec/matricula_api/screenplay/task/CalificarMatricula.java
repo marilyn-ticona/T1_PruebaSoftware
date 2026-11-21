@@ -33,7 +33,7 @@ public class CalificarMatricula implements Task {
         actor.attemptsTo(Patch.to("/api/matriculas/{id}/nota")
                 .with(peticion -> peticion.pathParam("id", idMatricula)
                         .contentType(ContentType.JSON)
-                        .auth().oauth2(tokenDocente)
+                        .header("Authorization", "Bearer " + tokenDocente)
                         .body(Map.of("nota", nota))));
     }
 }

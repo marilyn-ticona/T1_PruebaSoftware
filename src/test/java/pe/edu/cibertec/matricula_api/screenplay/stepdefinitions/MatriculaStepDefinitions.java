@@ -48,7 +48,7 @@ public class MatriculaStepDefinitions {
 
     @When("cotizo el curso {string} para el alumno {string}")
     public void cotizarCurso(String curso, String alumno) {
-        SerenityRest.given().baseUri(baseUrl).auth().oauth2(token)
+        SerenityRest.given().baseUri(baseUrl).header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON)
                 .body(Map.of("codigoAlumno", alumno, "cursos", List.of(curso)))
                 .post("/api/matriculas/cotizacion");
@@ -70,7 +70,7 @@ public class MatriculaStepDefinitions {
 
     @When("matrico al alumno {string} en el curso {string}")
     public void matricular(String alumno, String curso) {
-        Response respuesta = SerenityRest.given().baseUri(baseUrl).auth().oauth2(token)
+        Response respuesta = SerenityRest.given().baseUri(baseUrl).header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON)
                 .body(Map.of("codigoAlumno", alumno, "codigoCurso", curso))
                 .post("/api/matriculas");
@@ -92,13 +92,13 @@ public class MatriculaStepDefinitions {
 
     @When("pago la matrícula creada con el método {string}")
     public void pagar(String metodo) {
-        RequestSpecification peticion = SerenityRest.given().baseUri(baseUrl).auth().oauth2(token)
+        RequestSpecification peticion = SerenityRest.given().baseUri(baseUrl).header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON);
         if ("Sin cuerpo en la petición".equalsIgnoreCase(metodo)) {
-            peticion.post("/api/matriculas/{id}/pagar", idMatricula);
+            peticion.patch("/api/matriculas/{id}/pagar", idMatricula);
         } else {
             peticion.body(Map.of("metodo", metodo))
-                    .post("/api/matriculas/{id}/pagar", idMatricula);
+                    .patch("/api/matriculas/{id}/pagar", idMatricula);
         }
     }
 
@@ -116,7 +116,7 @@ public class MatriculaStepDefinitions {
 
     @When("consulto los pagos del alumno {string}")
     public void consultarPagos(String alumno) {
-        SerenityRest.given().baseUri(baseUrl).auth().oauth2(token)
+        SerenityRest.given().baseUri(baseUrl).header("Authorization", "Bearer " + token)
                 .queryParam("alumno", alumno)
                 .get("/api/pagos");
     }
@@ -137,7 +137,7 @@ public class MatriculaStepDefinitions {
 
     @When("cotizo los cursos que deben fallar:")
     public void cotizarCursosQueDebenFallar(DataTable cursos) {
-        SerenityRest.given().baseUri(baseUrl).auth().oauth2(token)
+        SerenityRest.given().baseUri(baseUrl).header("Authorization", "Bearer " + token)
                 .contentType(ContentType.JSON)
                 .body(Map.of("codigoAlumno", alumno, "cursos", cursos.asList(String.class)))
                 .post("/api/matriculas/cotizacion");

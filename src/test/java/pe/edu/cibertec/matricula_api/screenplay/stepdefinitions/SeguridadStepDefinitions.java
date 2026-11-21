@@ -65,7 +65,7 @@ public class SeguridadStepDefinitions {
     public void perfilConAccessTokenNuevo() {
         String token = theActorInTheSpotlight().recall("accessTokenNuevo");
         theActorInTheSpotlight().attemptsTo(Get.resource("/api/auth/perfil")
-                .with(peticion -> peticion.auth().oauth2(token)));
+                .with(peticion -> peticion.header("Authorization", "Bearer " + token)));
     }
 
     @When("CerrarSesion con el accessToken guardado")
@@ -78,7 +78,7 @@ public class SeguridadStepDefinitions {
     public void perfilConAccessTokenGuardado() {
         String token = theActorInTheSpotlight().recall("accessToken");
         theActorInTheSpotlight().attemptsTo(Get.resource("/api/auth/perfil")
-                .with(peticion -> peticion.auth().oauth2(token)));
+                .with(peticion -> peticion.header("Authorization", "Bearer " + token)));
     }
 
     @When("intento iniciar sesión con el usuario {string} según la tabla:")
@@ -103,7 +103,7 @@ public class SeguridadStepDefinitions {
     public void listarAlumnos() {
         String token = theActorInTheSpotlight().recall("accessToken");
         theActorInTheSpotlight().attemptsTo(Get.resource("/api/alumnos")
-                .with(peticion -> peticion.auth().oauth2(token)));
+                .with(peticion -> peticion.header("Authorization", "Bearer " + token)));
     }
 
     @Then("el codigo del error de seguridad es {string}")
